@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 阴影层 -->
+    <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#F0F0F0" /> <!-- 确保这里设置为浅灰色 -->
+            <corners android:radius="16dp" />
+            <stroke android:width="2dp" android:color="#CCCCCC" />
+        </shape>
+    </item>
+
+
+    <!-- 按钮背景 -->
+    <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#F0F0F0" /> <!-- 按钮主颜色 (浅灰色) -->
+            <corners android:radius="16dp" /> <!-- 圆角半径 -->
+            <stroke android:width="2dp" android:color="#CCCCCC" /> <!-- 边框颜色 (更深的灰色) -->
+        </shape>
+    </item>
+
+
+</layer-list>
