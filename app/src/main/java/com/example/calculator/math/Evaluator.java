@@ -36,8 +36,7 @@ public class Evaluator {
             PrefixExpression prefixExpression = (PrefixExpression) expression;
             switch (prefixExpression.operator.type){
                 case Token.MINUS:
-                    BigDecimal num = evalExpression(prefixExpression.expr);
-                    return toBigInteger(num.negate()).mod(M);
+                    return evalExpression(prefixExpression.expr,M).negate().mod(M);
                 default:
                     throw new ExpressionException("unknown prefix operator");
             }
@@ -45,8 +44,8 @@ public class Evaluator {
 
         if (expression instanceof InfixExpression){
             InfixExpression infixExpression = (InfixExpression) expression;
-            BigInteger left = toBigInteger(evalExpression(infixExpression.leftExpr)).mod(M);
-            BigInteger right = toBigInteger(evalExpression(infixExpression.rightExpr)).mod(M);
+            BigInteger left = evalExpression(infixExpression.leftExpr,M);
+            BigInteger right = evalExpression(infixExpression.rightExpr,M);
             try {
                 switch (infixExpression.operator.type){
                     case Token.PLUS:
