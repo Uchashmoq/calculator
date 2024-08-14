@@ -17,6 +17,7 @@ import java.util.TreeSet;
 
 public class Evaluator {
 
+    private static final BigDecimal ep = BigDecimal.valueOf(1e-12);
     public static final MathContext mc = new MathContext(10000, RoundingMode.HALF_UP);
 
     public static BigInteger eval(String expr,BigInteger M) throws ExpressionException{
@@ -148,13 +149,23 @@ public class Evaluator {
         }
         BigDecimal logBase = BigDecimal.valueOf(Math.log(base.doubleValue()));
         BigDecimal expLogBase = exponent.multiply(logBase, mc);
-        return BigDecimal.valueOf(integerApproximation(Math.exp(expLogBase.doubleValue())));
+        return integerApproximation(Math.exp(expLogBase.doubleValue()));
     }
 
-    public static double integerApproximation(double d){
-        long d1 = (long) d;
-        if(Math.abs(d-d1)<1e-7) return d1;
-        return d;
+    public static BigDecimal integerApproximation(double d){
+        BigDecimal decimal = BigDecimal.valueOf(d);
+        if(Evaluator.isInteger(decimal)){
+            return decimal.stripTrailingZeros();
+        }
+        BigDecimal floor = new BigDecimal(decimal.toBigInteger());
+        if(decimal.subtract(floor).abs().compareTo(ep)<0){
+            return floor;
+        }
+        BigDecimal ceil = floor.add(BigDecimal.ONE);
+        if(decimal.subtract(ceil).abs().compareTo(ep)<0){
+            return ceil;
+        }
+       return decimal.stripTrailingZeros();
     }
 
     private static BigInteger BIGINTEGER_TWO = BigInteger.valueOf(2);
@@ -306,6 +317,25 @@ public class Evaluator {
             r = r.multiply(b).mod(p);
         }
         return r;
+    }
+
+    public static String decimalStrFormat(BigDecimal decimal){
+        if(Evaluator.isInteger(decimal)){
+            return decimal.stripTrailingZeros().toPlainString();
+        }
+        BigInteger floor = decimal.toBigInteger();
+        if(decimal.subtract(new BigDecimal(floor)).abs().compareTo(ep)<0){
+            return floor.toString();
+        }
+        BigInteger ceil = floor.add(BigInteger.ONE);
+        if(decimal.subtract(new BigDecimal(ceil)).abs().compareTo(ep)<0){
+            return ceil.toString();
+        }
+        BigDecimal strip =  decimal.stripTrailingZeros();
+        if(strip.scale()<50){
+            return strip.toPlainString();
+        }
+        return strip.setScale(20,BigDecimal.ROUND_HALF_DOWN).toPlainString();
     }
 
 }

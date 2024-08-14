@@ -3,7 +3,6 @@ package com.example.calculator;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,6 +12,7 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,7 +21,6 @@ import com.example.calculator.math.ExpressionException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.StringJoiner;
@@ -29,7 +28,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int SCALE = 16;
     private Vibrator vibrator;
     private TextView inputView;
     private TextView outputView;
@@ -45,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     private ExecutorService executorService;
 
     private Thread mainThread;
+
+    private ProgressBar progressBar;
 
 
 
@@ -105,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
             vibrate(50);
             if(!expr.isEmpty()){
                executorService.submit(()->{
+                   showProgressBar();
                    try {
                        BigDecimal decimal = new BigDecimal(expr);
                        String result =  String.format("[BIN(%s),OCT(%s),HEX(%s)]",
@@ -116,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
                    }catch (RuntimeException e){
                        toast("Base conversion failure");
                    }
+                   hideProgressBar();
                });
             }
             return true;
@@ -129,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
             vibrate(50);
             executorService.submit(()->{
                 if(!expr.isEmpty()){
+                    showProgressBar();
                     try {
                         BigInteger integer = new BigInteger(expr);
                         if(mod!=null) integer=integer.mod(mod);
@@ -136,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
                     }catch (RuntimeException e){
                         toast("Failure to decompose prime factors");
                     }
+                    hideProgressBar();
                 }
             });
             return true;
@@ -151,7 +155,9 @@ public class MainActivity extends AppCompatActivity {
                     BigDecimal decimal = new BigDecimal(expr);
                     BigInteger floor = decimal.setScale(0, RoundingMode.CEILING).toBigInteger();
                     executorService.submit(()->{
+                        showProgressBar();
                         setText(outputView,floor.nextProbablePrime().toString());
+                        hideProgressBar();
                     });
                 }catch (RuntimeException e){
                     toast("Failure to generate a prime number");
@@ -202,16 +208,16 @@ public class MainActivity extends AppCompatActivity {
     private void initSqrt() {
         TextView btSqrt = (TextView) findViewById(R.id.cal_bt_sqrt);
         btSqrt.setOnClickListener(v -> {
-            evalInputSqrt();
             vibrate(50);
+            evalInputSqrt();
         });
     }
 
     private void initEq() {
         TextView btEq = (TextView) findViewById(R.id.cal_bt_eq);
         btEq.setOnClickListener(v -> {
-            evalInput();
             vibrate(50);
+            evalInput();
         });
     }
 
@@ -219,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
         String expr = (String) inputView.getText();
         if (expr.isEmpty()) return;
         executorService.submit(()->{
+            showProgressBar();
             try {
                 if(mod==null){
                     double result = Evaluator.eval(expr).doubleValue();
@@ -231,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
             }catch (RuntimeException e){
                 toast("failed to evaluate: "+e.getMessage());
             }
+            hideProgressBar();
         });
     }
 
@@ -247,11 +255,12 @@ public class MainActivity extends AppCompatActivity {
         String expr = (String) inputView.getText();
         if (expr.isEmpty()) return;
         executorService.submit(()->{
+            showProgressBar();
             BigInteger M = mod;
             try {
                 if(M==null){
                     BigDecimal result = Evaluator.eval(expr);
-                    setText(outputView,bigDecimalStr(result));
+                    setDecimalText(outputView,result);
                 }else{
                     BigInteger result = Evaluator.eval(expr,M);
                     setText(outputView,result.toString());
@@ -259,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
             }catch (RuntimeException e){
                 toast("failed to evaluate: "+e.getMessage());
             }
+            hideProgressBar();
         });
     }
 
@@ -318,8 +328,24 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void showProgressBar(){
+        if(mainThread==Thread.currentThread()){
+            progressBar.setVisibility(View.VISIBLE);
+        }else{
+            handler.post(()->progressBar.setVisibility(View.VISIBLE));
+        }
+    }
+    private void hideProgressBar(){
+        if(mainThread==Thread.currentThread()){
+            progressBar.setVisibility(View.INVISIBLE);
+        }else{
+            handler.post(()->progressBar.setVisibility(View.INVISIBLE));
+        }
+    }
+
     private void initMod(){
         TextView btMod = (TextView) findViewById(R.id.cal_bt_mod);
+        TextView btEq = findViewById(R.id.cal_bt_eq);
         btMod.setOnClickListener(view -> {
             appendText(focusedTextView,"%");
             vibrate(50);
@@ -332,18 +358,22 @@ public class MainActivity extends AppCompatActivity {
                 if (expr.isEmpty()){
                     mod=null;
                     Log.d("mod","null");
+                    btEq.setText("=");
                     focusedTextView=inputView;
                 }else{
                     executorService.submit(()->{
+                        showProgressBar();
                         try {
                             BigDecimal res = Evaluator.eval(expr);
                             mod=Evaluator.toBigInteger(res);
                             Log.d("mod",mod.toString());
                             setText(modView,"mod("+mod+")");
                             focusedTextView=inputView;
+                            btEq.setText("≡");
                         }catch (ExpressionException e){
                             toast("failed to set modulus: "+e.getMessage());
                         }
+                        hideProgressBar();
                     });
                 }
             }else{
@@ -366,17 +396,20 @@ public class MainActivity extends AppCompatActivity {
             });
         }
     }
-    private void setText(TextView tv,CharSequence cs){
+    private void setDecimalText(TextView tv,BigDecimal decimal){
+        setText(tv,Evaluator.decimalStrFormat(decimal));
+    }
+    private void setText(TextView tv, String s){
         if(mainThread==Thread.currentThread()){
-            Log.d("setText",cs.toString());
-            audit((String) cs);
-            tv.setText(cs);
+            Log.d("setText", s);
+            audit(s);
+            tv.setText(s);
             setTextSize(tv);
         }else{
             handler.post(()->{
-                Log.d("setText",cs.toString());
-                audit((String) cs);
-                tv.setText(cs);
+                Log.d("setText", s);
+                audit(s);
+                tv.setText(s);
                 setTextSize(tv);
             });
         }
@@ -415,6 +448,7 @@ public class MainActivity extends AppCompatActivity {
         inputView=findViewById(R.id.tv_input);
         outputView=findViewById(R.id.tv_output);
         modView=findViewById(R.id.tv_mod);
+        progressBar =findViewById(R.id.cal_progress_bar);
         focusedTextView=inputView;
     }
 
@@ -442,7 +476,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void audit(String s){
-        if("8964".equals(s) || "110101195306153019".equals(s)){
+        if("8964".equals(s) ){
             ImageView vWarn = (ImageView) findViewById(R.id.img_warn);
             vWarn.setVisibility(View.VISIBLE);
             handler.postDelayed(new Runnable() {
@@ -453,4 +487,6 @@ public class MainActivity extends AppCompatActivity {
             }, 2000);
         }
     }
+
+
 }

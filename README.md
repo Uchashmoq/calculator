@@ -6,7 +6,7 @@ Supports addition, subtraction, multiplication, division, integer division, powe
 
 ## Usage
 
-Usage: Enter expression, press '=' to get result, long press 'C' to clear. Long press '%' to input modulus, long press '%' again to save modulus, return to expression input mode. Long press '÷' to input integer division symbol. Long press 'MR' to cache data from result area, short press 'MR' to read cached data. Long press '2' to round down the result, long press '8' to round up the result, long press '4' to factorize the result prime factor, long press '5 ' to generate a prime number larger than the result.
+Usage: Enter expression, press '=' to get result, long press 'C' to clear. Long press '%' to input modulus, long press '%' again to save modulus, return to expression input mode. Long press '÷' to input integer division symbol. Long press 'MR' to cache data from result area, short press 'MR' to read cached data. Long press '2' to round down the result, long press '8' to round up the result, long press '4' to factorize the result prime factor, long press '6 ' to generate a prime number larger than the result.
 
 <img src="imgs\expression.png" alt="expression" style="zoom: 25%;" />
 

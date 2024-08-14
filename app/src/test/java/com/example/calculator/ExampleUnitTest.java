@@ -31,6 +31,13 @@ public class ExampleUnitTest {
         System.out.printf("n: %s , m: %s\n",n,m);
         System.out.println(Evaluator.findQuadraticResidueTonelliShanks(n,m));
     }
+    @Test
+    public void testDc(){
+        BigDecimal  b = new BigDecimal("12.00001");
+        System.out.println(b.scale());
+        System.out.println(new BigDecimal(b.toBigInteger()));
+        System.out.println(b.setScale(20,BigDecimal.ROUND_FLOOR));
+    }
 
     @Test
     public void testPow(){
